@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Agent|Task", "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Agent|Task", "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "SubagentStart": [
+      { "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "http", "url": "http://localhost:4317/api/hook", "timeout": 3 } ] }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "owner": "Patron",
+  "weather": "clear",
+  "sky": "auto",
+  "season": "auto",
+  "toast": true,
+  "ambient": true,
+  "summaryHour": 19,
+  "argonWeeklyWarn": 25,
+  "roles": [],
+  "agents": {}
+}

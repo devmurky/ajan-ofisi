@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapor · Ajan Ofisi</title>
+<style>
+  :root { --ink: #2d1b4e; --ink-2: #5b4a7a; --muted: #8a7aa8; --purple: #8b5cf6; --purple-d: #6d28d9; --pink: #ff6fb5; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fdfbff; color: var(--ink); font: 15px/1.65 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  body::before, body::after { content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(70px); opacity: .7; pointer-events: none; }
+  body::before { width: 46vw; height: 46vw; left: -10vw; top: -14vw; background: radial-gradient(circle, #d8c8ff, transparent 70%); }
+  body::after { width: 42vw; height: 42vw; right: -10vw; bottom: -12vw; background: radial-gradient(circle, #ffc7e4, transparent 70%); }
+  .bar { position: sticky; top: 0; display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: rgba(255, 255, 255, .7); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(139, 92, 246, .12); z-index: 2; }
+  .bar a { color: var(--purple-d); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .bar span { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar button { margin-left: auto; border: 1px solid rgba(139, 92, 246, .25); background: #fff; color: var(--purple-d); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  main { max-width: 860px; margin: 24px auto 60px; padding: 28px 36px; background: rgba(255, 255, 255, .7); backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, .92); border-radius: 20px; box-shadow: 0 10px 34px rgba(109, 40, 217, .12); }
+  h1 { font-size: 28px; line-height: 1.25; margin: 0 0 12px; background: linear-gradient(90deg, var(--purple-d), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h2 { font-size: 20px; margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #ece6f6; }
+  h3 { font-size: 16px; margin: 22px 0 8px; color: var(--purple-d); }
+  p, li { color: var(--ink-2); }
+  strong { color: var(--ink); }
+  a { color: var(--purple-d); }
+  blockquote { margin: 12px 0; padding: 8px 14px; border-left: 3px solid var(--pink); background: rgba(255, 111, 181, .07); border-radius: 0 10px 10px 0; color: var(--ink-2); }
+  code { font: 13px ui-monospace, Consolas, monospace; background: #f4efff; padding: 1px 5px; border-radius: 5px; }
+  pre { background: #f6f2ff; padding: 12px 14px; border-radius: 12px; overflow: auto; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #ece6f6; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; background: rgba(244, 239, 255, .6); }
+  hr { border: 0; border-top: 1px dashed #d9ccf7; margin: 32px 0; }
+  .mermaid { background: #fff; border-radius: 12px; padding: 12px; margin: 12px 0; text-align: center; }
+  .err { color: #a51f43; }
+  @media (max-width: 700px) { main { margin: 12px; padding: 18px 16px; } }
+  @media print { .bar { display: none; } main { box-shadow: none; border: 0; margin: 0; max-width: none; } body::before, body::after { display: none; } }
+</style>
+</head>
+<body>
+<div class="bar"><a href="/">← Ofise dön</a><span id="path"></span><button onclick="print()">Yazdır / PDF</button></div>
+<main id="doc">Yükleniyor…</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+'use strict';
+(async () => {
+  const doc = document.getElementById('doc');
+  const yol = new URLSearchParams(location.search).get('yol') || '';
+  // sadece ofisin kendi çıktı klasöründeki Markdown dosyaları
+  if (!/^\/out\/[\w\-./%]+\.md$/.test(yol) || yol.includes('..')) { doc.innerHTML = '<p class="err">Geçersiz rapor yolu.</p>'; return; }
+  document.getElementById('path').textContent = decodeURIComponent(yol);
+  try {
+    const r = await fetch(yol);
+    if (!r.ok) throw new Error('Rapor bulunamadı (' + r.status + ')');
+    const md = await r.text();
+    const t = (/^# (.+)$/m.exec(md) || [])[1]; if (t) document.title = t + ' · Ajan Ofisi';
+    if (window.marked && window.DOMPurify) {
+      doc.innerHTML = DOMPurify.sanitize(marked.parse(md, { gfm: true, breaks: false }));
+      // mermaid kod bloklarını diyagrama çevir
+      const blocks = [...doc.querySelectorAll('pre code.language-mermaid')];
+      if (blocks.length && window.mermaid) {
+        blocks.forEach(b => { const d = document.createElement('div'); d.className = 'mermaid'; d.textContent = b.textContent; b.parentElement.replaceWith(d); });
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#f1eaff', primaryBorderColor: '#8b5cf6', primaryTextColor: '#2d1b4e', lineColor: '#ff6fb5', fontFamily: 'Segoe UI' } });
+        await mermaid.run({ nodes: doc.querySelectorAll('.mermaid') });
+      }
+    } else {
+      // kütüphaneler yüklenemezse (internet yok) düz metin
+      const pre = document.createElement('pre'); pre.textContent = md; doc.replaceChildren(pre);
+    }
+  } catch (e) { doc.innerHTML = ''; const p = document.createElement('p'); p.className = 'err'; p.textContent = e.message; doc.appendChild(p); }
+})();
+</script>
+</body>
+</html>

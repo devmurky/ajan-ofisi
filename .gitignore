@@ -1,0 +1,20 @@
+# çalışma çıktıları ve canlı durum
+out/
+ofis/events.jsonl
+ofis/events.jsonl.*
+ofis/locks/
+ofis/queue/
+ofis/server.log
+ofis/ayarlar.json
+ofis/index.html.tek-dosya
+
+# test klasörleri
+test-run/
+test-gorsel/
+test-toplanti/
+
+# yedekler ve kişisel dosyalar
+*.yedek-*
+*.lnk
+*.old
+EKIP-RAPORU-*.md

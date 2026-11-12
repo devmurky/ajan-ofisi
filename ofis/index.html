@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajan Ofisi</title>
+<link rel="stylesheet" href="/static/ofis.css">
+</head>
+<body>
+<div class="blob"></div>
+<div class="app">
+  <header class="glass">
+    <div class="brand"><i></i><h1>Ajan Ofisi</h1></div>
+    <span class="chip-stat">Çalışan <b id="sRun">0</b></span>
+    <span class="chip-stat">Sırada <b id="sQueue">0</b></span>
+    <span class="chip-stat">Bugün biten <b id="sDone">0</b></span>
+    <span class="chip-stat argon" id="argonChip" title="Pazartesiden bu yana Argon ile biten işler">Argon bu hafta <b id="sArgon">0 iş</b></span>
+    <span class="spacer"></span>
+    <button class="btn" id="replayBtn" title="Bir günün olaylarını hızlandırılmış oynat">Günü oynat</button>
+    <button class="btn" id="soundBtn" title="Ofis seslerini aç ya da kapat">Ses kapalı</button>
+    <button class="btn" id="settingsBtn" title="Ofis ayarları">Ayarlar</button>
+    <span class="live" id="live"><i></i><span>bağlanıyor</span></span>
+  </header>
+
+  <main class="stage-wrap glass">
+    <div class="stage" id="stage">
+      <div class="world" id="world">
+        <canvas id="cv"></canvas>
+        <div class="ov" id="ov"></div>
+      </div>
+      <div class="zoom" id="zoomBox"><button type="button" id="zoomIn" title="Yakınlaştır">+</button><button type="button" id="zoomOut" title="Uzaklaştır">−</button><button type="button" id="zoomReset" title="Sığdır">⤢</button></div>
+    </div>
+    <div class="hint">Bir karaktere tıkla, profilini gör. Tekerlekle yakınlaştır, sürükleyerek gez. İşleri Claude Code'a sohbetten ya da sağdaki <b>Yeni iş</b> sekmesinden ver.</div>
+  </main>
+
+  <aside class="glass">
+    <div class="tabs">
+      <button class="tab on" data-tab="feed">Akış</button>
+      <button class="tab" data-tab="gallery">Galeri</button>
+      <button class="tab" data-tab="stats">İstatistik</button>
+      <button class="tab" data-tab="task">Yeni iş</button>
+    </div>
+    <div class="pane on" id="pane-feed">
+      <div class="sec">Ekip</div>
+      <div class="roster" id="roster"></div>
+      <div class="sec">Akış <label class="tgl"><input type="checkbox" id="hideTests" checked> testleri gizle</label><select id="projFilter"><option value="">Tüm projeler</option></select></div>
+      <div class="feed" id="feed"><div class="empty">Henüz iş yok.</div></div>
+    </div>
+    <div class="pane" id="pane-gallery">
+      <div class="sec">Üretilen görseller <select id="projFilter2"><option value="">Tüm projeler</option></select></div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+    <div class="pane" id="pane-stats">
+      <div id="stats"><div class="empty">Yükleniyor…</div></div>
+    </div>
+    <div class="pane" id="pane-task">
+      <div class="seg" id="taskMode"><button type="button" class="on" data-mode="task">Tek iş</button><button type="button" data-mode="meet">Ekip toplantısı</button></div>
+      <form class="task" id="meetForm" hidden>
+        <label>Proje klasörü <input id="mDir" list="dirList" placeholder="C:\Projeler\yeni-proje" required autocomplete="off"></label>
+        <label>Konu <input id="mTopic" maxlength="80" value="Proje başlangıç toplantısı"></label>
+        <label>Proje özeti <textarea id="mBrief" placeholder="Ne yapmak istiyorsun? Kimler kullanacak, olmazsa olmaz özellikler, tercih ettiğin teknolojiler… Klasör boşsa uzmanlar her şeyi bu özetten çıkaracak."></textarea></label>
+        <div class="sec" style="margin:2px 0 0">Uzmanlar</div>
+        <div class="role-pick" id="mRoles"><div class="small">Yükleniyor…</div></div>
+        <button class="submit" id="mSubmit" type="submit">Toplantıyı başlat</button>
+        <div class="msg" id="mMsg"></div>
+        <div class="small">Her uzman kendi rol dosyasına göre (<code>~/agy-tools/ekip/roller/</code>) projeyi sadece okuyarak inceler; hiçbir dosyayı değiştirmez. Raportör hepsini birleştirip proje klasörüne <b>EKIP-RAPORU-*.md</b> yazar. Tasarım uzmanı Argon kotası kullanır.</div>
+      </form>
+      <form class="task" id="taskForm">
+        <label>Şablon
+          <select id="fTemplate"><option value="">Boş görev</option></select>
+        </label>
+        <div class="two">
+          <label>Ajan
+            <select id="fAgent">
+              <option value="gemini-4-argon|Argon">Argon · görsel ve tasarım</option>
+              <option value="claude-opus-5-5|Opus">Opus · zor kod işleri</option>
+              <option value="claude-sonnet-5-5|Sonnet">Sonnet · hızlı kod işleri</option>
+            </select>
+          </label>
+          <label>Derinlik
+            <select id="fLevel">
+              <option value="low">Düşük</option>
+              <option value="medium" selected>Orta</option>
+              <option value="high">Yüksek</option>
+            </select>
+          </label>
+        </div>
+        <label>Proje klasörü <input id="fDir" list="dirList" placeholder="C:\Projeler\proje" required autocomplete="off"></label>
+        <datalist id="dirList"></datalist>
+        <label>Kısa başlık <input id="fTitle" maxlength="80" placeholder="ör. Ana sayfa hero görseli"></label>
+        <label>Görev <textarea id="fPrompt" required placeholder="Ajanın ne yapmasını istiyorsun? Görsel işlerinde stili, boyutu ve dosya adını yaz."></textarea></label>
+        <div class="drop" id="fDrop" tabindex="0">
+          <input type="file" id="fFile" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+          <span>Referans görsel: buraya sürükle ya da <u>seç</u> (en çok 6)</span>
+          <div class="refs" id="fRefs"></div>
+        </div>
+        <button class="submit" id="fSubmit" type="submit">Ajana gönder</button>
+        <div class="msg" id="fMsg"></div>
+        <div class="small">Argon'un haftalık kotası sınırlı; kod işlerini Opus ya da Sonnet'e ver. Ajan terminal komutu çalıştıramaz, dosya düzenleyebilir.</div>
+      </form>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="modal"><div class="profile glass" id="profile"></div></div>
+
+<script src="/static/scene.js"></script>
+<script src="/static/agents.js"></script>
+<script src="/static/draw.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/extras.js"></script>
+</body>
+</html>
